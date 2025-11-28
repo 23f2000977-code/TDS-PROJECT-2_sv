@@ -2,36 +2,39 @@ from langchain.tools import tool
 import speech_recognition as sr
 import os
 import subprocess
+import shutil
 
 @tool
 def transcribe_audio(file_path: str) -> str:
     """
     Transcribe an MP3 or WAV audio file into text using Google's Web Speech API.
-    Handles conversion using system FFmpeg directly for stability.
+    Uses system ffmpeg directly, with NO pydub dependency.
     """
     try:
         # Resolve full path
         file_path = os.path.join("LLMFiles", file_path)
-        
-        # Determine paths
+        if not os.path.exists(file_path):
+            return f"Error: File not found at {file_path}"
+
+        # Check if ffmpeg is installed
+        if not shutil.which("ffmpeg"):
+            return "Error: ffmpeg is not installed or not in PATH."
+
+        # Determine output path
         if file_path.lower().endswith(".mp3"):
             wav_path = file_path.replace(".mp3", ".wav")
             
-            # --- ROBUST CONVERSION START ---
-            # We use subprocess directly to avoid pydub path issues
-            print(f"Converting {file_path} to {wav_path}...")
+            # Use subprocess to convert MP3 -> WAV (16kHz, Mono)
             command = [
                 "ffmpeg", "-y", "-i", file_path, 
-                "-ac", "1", "-ar", "16000", # Convert to Mono, 16kHz (optimal for speech recognition)
+                "-ac", "1", "-ar", "16000", 
                 wav_path
             ]
             
-            try:
-                subprocess.run(command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            except subprocess.CalledProcessError:
-                return "Error: FFmpeg failed to convert audio. Is ffmpeg installed?"
-            except FileNotFoundError:
-                return "Error: FFmpeg not found in system PATH."
+            # Run conversion and capture errors
+            result = subprocess.run(command, capture_output=True, text=True)
+            if result.returncode != 0:
+                return f"Error: FFmpeg conversion failed.\nStderr: {result.stderr}"
             
             final_path = wav_path
         else:
@@ -40,19 +43,16 @@ def transcribe_audio(file_path: str) -> str:
         # Speech recognition
         recognizer = sr.Recognizer()
         with sr.AudioFile(final_path) as source:
+            # Read the audio file
             audio_data = recognizer.record(source)
-            # Use show_all=True to debug if needed, but default is fine
             try:
+                # Transcribe
                 text = recognizer.recognize_google(audio_data)
+                return text
             except sr.UnknownValueError:
-                return "Error: Speech was unintelligible."
+                return "Error: Audio was unclear or silent."
             except sr.RequestError as e:
-                return f"Error: API unavailable: {e}"
+                return f"Error: Google API error: {e}"
 
-        # Clean up wav file if we created it
-        if final_path != file_path and os.path.exists(final_path):
-            os.remove(final_path)
-
-        return text
     except Exception as e:
-        return f"Error occurred: {e}"
+        return f"Error processing audio: {str(e)}"
