@@ -8,7 +8,7 @@ load_dotenv()
 # ==========================================
 # 👇 CHANGE THIS URL TO THE ONE YOU WANT TO TEST
 # ==========================================
-TARGET_URL = "https://tds-llm-analysis.s-anand.net/demo" 
+TARGET_URL = "https://p2testingone.vercel.app/q1.html" 
 # Other options:
 # "https://tds-llm-analysis.s-anand.net/demo"
 # "https://tds-llm-analysis.s-anand.net/demo2"

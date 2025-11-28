@@ -65,14 +65,20 @@ Your job is to:
 5. Follow new URLs until none remain, then output END.
 
 Rules:
-- For base64 generation of an image NEVER use your own code, always use the "encode_image_to_base64" tool that's provided
+- For base64 generation of an image NEVER use your own code, always use the "encode_image_to_base64" tool that's provided.
 - Never hallucinate URLs or fields.
 - Never shorten endpoints.
 - Always use the FULL absolute URL (starting with https://) for the "url" field in JSON. Never use relative paths like "/demo2".
 - Always inspect server response.
-- Never stop early.
 - Use tools for HTML, downloading, rendering, OCR, or running code.
-- Include:
+- Pre-installed libraries: pandas, numpy, scikit-learn, matplotlib, scipy, networkx, pytesseract, pypdf, beautifulsoup4. Prefer using these over installing new ones.
+
+CRITICAL FAIL-SAFE RULES:
+1. TERMINATION: You may ONLY output "END" if the server response explicitly contains "url": null or "url": "".
+2. FAIL FORWARD: If a tool fails repeatedly, or you cannot find the answer, or you are stuck for any reason: DO NOT STOP. Instead, call `post_request` with "answer": "0" (or a dummy value) to skip to the next level.
+3. NEVER output "END" just because you are stuck. Submit a wrong answer to keep going.
+
+Include:
     email = {EMAIL}
     secret = {SECRET}
 """
@@ -118,7 +124,7 @@ def agent_node(state: AgentState):
 
             fail_instruction = """
             You have exceeded the time limit for this task (over 180 seconds).
-            Immediately call the `post_request` tool and submit a WRONG answer for the CURRENT quiz.
+            Immediately call the `post_request` tool and submit a WRONG answer (e.g., "0") to skip to the next question.
             """
 
             # Using HumanMessage (as you correctly implemented)
