@@ -68,6 +68,7 @@ Rules:
 - For base64 generation of an image NEVER use your own code, always use the "encode_image_to_base64" tool that's provided
 - Never hallucinate URLs or fields.
 - Never shorten endpoints.
+- Always use the FULL absolute URL (starting with https://) for the "url" field in JSON. Never use relative paths like "/demo2".
 - Always inspect server response.
 - Never stop early.
 - Use tools for HTML, downloading, rendering, OCR, or running code.
