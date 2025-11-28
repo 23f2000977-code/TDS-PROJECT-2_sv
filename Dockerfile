@@ -1,37 +1,34 @@
 FROM python:3.10-slim
 
-# --- System deps required by Playwright browsers AND Tesseract ---
-# Added 'tesseract-ocr' to the install list
+# 1. Install system dependencies (ffmpeg, playwright, tesseract)
 RUN apt-get update && apt-get install -y \
     wget gnupg ca-certificates curl unzip \
-    # Playwright dependencies
     libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libxkbcommon0 \
     libgtk-3-0 libgbm1 libasound2 libxcomposite1 libxdamage1 libxrandr2 \
     libxfixes3 libpango-1.0-0 libcairo2 \
-    # Tesseract OCR engine
     tesseract-ocr \
+    ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
-# --- Install Playwright + Chromium ---
-RUN pip install playwright && playwright install --with-deps chromium
+# 2. Install Python tools
+RUN pip install --no-cache-dir playwright uv uvicorn
 
-# --- Install uv package manager ---
-RUN pip install uv
+# 3. Install Playwright browsers
+RUN playwright install --with-deps chromium
 
-# --- Copy app to container ---
 WORKDIR /app
 
+# 4. Copy files
 COPY . .
 
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONIOENCODING=utf-8
+# 5. Install dependencies (System-wide to avoid venv path issues)
+RUN uv pip install --system -r pyproject.toml || uv pip install --system .
 
-# --- Install project dependencies using uv ---
-RUN uv sync --frozen
+# 6. CRITICAL: Create directory and fix permissions for Hugging Face
+RUN mkdir -p LLMFiles && chmod -R 777 LLMFiles
 
-# HuggingFace Spaces exposes port 7860
+# 7. Expose the port
 EXPOSE 7860
 
-# --- Run your FastAPI app ---
-# uvicorn must be in pyproject dependencies
-CMD ["uv", "run", "main.py"]
+# 8. Run FastAPI directly using uvicorn (More stable than 'uv run main.py')
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7860"]
