@@ -8,7 +8,7 @@ load_dotenv()
 # ==========================================
 # 👇 CHANGE THIS URL TO THE ONE YOU WANT TO TEST
 # ==========================================
-TARGET_URL = "https://p2testingone.vercel.app/q1.html" 
+TARGET_URL = "https://tds-llm-analysis.s-anand.net/demo" 
 # Other options:
 # "https://tds-llm-analysis.s-anand.net/demo"
 # "https://tds-llm-analysis.s-anand.net/demo2"
@@ -16,8 +16,7 @@ TARGET_URL = "https://p2testingone.vercel.app/q1.html"
 # "https://p2testingone.vercel.app/q1.html" 
 # ==========================================
 
-SERVER_URL = "https://eddywait-tds-project-2-sv.hf.space"
-
+SERVER_URL = "https://eddywait-tds-project-2-sv.hf.space/solve"
 payload = {
     "email": os.getenv("EMAIL"),
     "secret": os.getenv("SECRET"),
